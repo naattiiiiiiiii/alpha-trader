@@ -323,7 +323,7 @@ alpha-trader/
 | Notificaciones | python-telegram-bot |
 | Config | pydantic-settings |
 | Deploy | Docker Compose |
-| Hosting | Railway o Fly.io (~$5-10/mes) |
+| Hosting | Railway (~$5-10/mes, siempre on en cloud) |
 
 ---
 
@@ -353,9 +353,9 @@ MAX_SECTOR_EXPOSURE=0.25
 | Claude API (Haiku + Sonnet) | $20-40 |
 | Alpaca paper trading | $0 |
 | Datos de mercado (IEX) | $0 |
-| PostgreSQL (Docker local o free tier) | $0 |
-| Hosting (Railway/Fly.io) | $5-10 |
-| **Total** | **$25-50/mes** |
+| PostgreSQL (Railway addon) | $0-5 |
+| Hosting cloud (Railway) | $5-10 |
+| **Total** | **$25-55/mes** |
 
 ---
 
@@ -376,7 +376,60 @@ El agente no puede monitorizar las ~8,000 acciones de Alpaca. Necesita un filtro
 
 ---
 
-## 13. Fases de Implementacion (alto nivel)
+## 13. Self-Maintenance (Auto-Mantenimiento)
+
+El sistema debe funcionar de forma autonoma en la nube sin intervencion humana. El ordenador local NO estara encendido.
+
+### 13.1 Infraestructura cloud
+
+- **Railway** como hosting principal: deploy automatico desde GitHub, siempre on
+- **PostgreSQL** como addon de Railway (free tier 1GB, suficiente para meses de datos)
+- **Docker** con restart policy `always` — si crashea, se reinicia solo
+- **Health checks** cada 60 segundos — Railway reinicia el contenedor si no responde
+
+### 13.2 Auto-healing
+
+- Reinicio automatico ante crash (Docker restart policy)
+- Reconexion automatica a WebSocket de Alpaca si se desconecta (backoff exponencial)
+- Reconexion automatica a PostgreSQL si pierde conexion
+- Si la API de Claude falla, el agente sigue operando solo con senales tecnicas/fundamentales (modo degradado)
+- Si la API de Alpaca falla, el agente se pausa y notifica por Telegram
+
+### 13.3 Auto-monitorizacion
+
+- Health endpoint `/health` que reporta estado de todos los componentes
+- Verificacion periodica de conectividad: Alpaca API, Claude API, PostgreSQL, Telegram
+- Deteccion de anomalias: si el agente no ha ejecutado ciclos en 30min durante horario de mercado, alerta
+
+### 13.4 Limpieza automatica de datos
+
+- Snapshots de portfolio: mantener 90 dias, comprimir/borrar anteriores
+- Logs: mantener 30 dias
+- Senales: mantener 180 dias
+- Trades: mantener siempre (son el historial)
+- Ejecuta limpieza 1x/semana (domingo)
+
+### 13.5 Auto-reportes sin pedirlos
+
+- **Diario** (al cierre del mercado): P&L del dia, trades ejecutados, estado del portfolio
+- **Semanal** (viernes cierre): resumen de la semana, win rate, mejores/peores trades, drawdown actual
+- **Alertas inmediatas**: circuit breaker, errores criticos, servicios caidos
+
+### 13.6 Deploy automatico
+
+- Push a `main` en GitHub → Railway despliega automaticamente
+- GitHub Actions para: lint, tests, build Docker image
+- Sin intervencion manual para actualizaciones
+
+### 13.7 Auto-ajuste de parametros
+
+- Si win rate cae por debajo del 40% en 20 trades consecutivos: reduce position size al 50% y notifica
+- Si drawdown supera el 7%: reduce frecuencia de analisis (menos trades, mas selectivo)
+- Recalibracion semanal de indicadores tecnicos (periodos optimos basados en volatilidad reciente)
+
+---
+
+## 14. Fases de Implementacion (alto nivel)
 
 1. **Fundamentos:** Proyecto base, config, BD, conexion Alpaca
 2. **Agentes Python:** Tecnico + Fundamental + Riesgo
@@ -385,4 +438,5 @@ El agente no puede monitorizar las ~8,000 acciones de Alpaca. Necesita un filtro
 5. **Dashboard:** FastAPI + HTMX, todas las paginas
 6. **Notificaciones:** Telegram bot
 7. **Integracion y testing:** Tests del sistema de riesgo, paper trading continuo
-8. **Deploy:** Docker Compose, hosting, CI/CD
+8. **Self-maintenance:** Auto-healing, limpieza BD, auto-reportes, health checks
+9. **Deploy:** Dockerfile, Railway, GitHub Actions CI/CD, deploy automatico
