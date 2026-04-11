@@ -95,6 +95,18 @@ async def main():
     scheduler.start()
     logger.info(f"Scheduler started. Analysis every {settings.analysis_interval_minutes}min.")
 
+    # Start FastAPI in background
+    import uvicorn
+    from src.api.app import create_app
+
+    app = create_app(portfolio=portfolio, executor=executor)
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+
+    # Run server as a task
+    server_task = asyncio.create_task(server.serve())
+    logger.info("Dashboard running at http://0.0.0.0:8000")
+
     # Keep running
     stop_event = asyncio.Event()
 
@@ -108,6 +120,7 @@ async def main():
 
     await stop_event.wait()
     scheduler.shutdown()
+    server_task.cancel()
     logger.info("Alpha Trader stopped.")
 
 
