@@ -1,0 +1,9 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "uv run python -m src.main"
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "always"
