@@ -1,8 +1,11 @@
 import json
 import hashlib
+import logging
 from openai import AsyncOpenAI
 
 from src.agents.base import BaseAgent, AgentResult
+
+logger = logging.getLogger(__name__)
 
 
 def _build_prompt(symbol: str, news_items: list[str]) -> str:
@@ -42,18 +45,44 @@ def _parse_response(text: str) -> dict:
 class SentimentAgent(BaseAgent):
     name = "sentiment"
 
-    def __init__(self, base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", model: str = "llama3.2"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434/v1",
+        api_key: str = "ollama",
+        model: str = "llama3.2",
+        alpaca_api_key: str = "",
+        alpaca_secret_key: str = "",
+    ):
         self._client = AsyncOpenAI(base_url=base_url, api_key=api_key)
         self._model = model
         self._cache: dict[str, dict] = {}
+        self._alpaca_api_key = alpaca_api_key
+        self._alpaca_secret_key = alpaca_secret_key
+        self._news_client = None
+        if alpaca_api_key and alpaca_secret_key:
+            from alpaca.data.news import NewsClient
+            self._news_client = NewsClient(
+                api_key=alpaca_api_key, secret_key=alpaca_secret_key,
+            )
 
     def _compute_news_hash(self, news_items: list[str]) -> str:
         content = "|".join(sorted(news_items))
         return hashlib.md5(content.encode()).hexdigest()
 
     async def _fetch_news(self, symbol: str) -> list[str]:
-        """Fetch news from Alpaca. Override in subclass or mock for testing."""
-        return []
+        """Fetch latest news headlines from Alpaca for the given symbol."""
+        if self._news_client is None:
+            return []
+        try:
+            from alpaca.data.requests import NewsRequest
+            request = NewsRequest(symbols=[symbol], limit=10)
+            response = self._news_client.get_news(request)
+            headlines = [item.headline for item in response.news if item.headline]
+            logger.info(f"{symbol}: fetched {len(headlines)} news headlines from Alpaca")
+            return headlines
+        except Exception as e:
+            logger.error(f"Failed to fetch news for {symbol}: {e}")
+            return []
 
     async def analyze(self, symbol: str) -> AgentResult:
         news_items = await self._fetch_news(symbol)

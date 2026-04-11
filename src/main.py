@@ -40,6 +40,8 @@ async def main():
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model_fast,
+        alpaca_api_key=settings.alpaca_api_key,
+        alpaca_secret_key=settings.alpaca_secret_key,
     )
     decision = DecisionAgent(
         base_url=settings.llm_base_url,
