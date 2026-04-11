@@ -1,6 +1,6 @@
 import json
 import hashlib
-import anthropic
+from google import genai
 
 from src.agents.base import BaseAgent, AgentResult
 
@@ -25,7 +25,6 @@ Score guide:
 
 def _parse_response(text: str) -> dict:
     try:
-        # Try to extract JSON from response
         text = text.strip()
         if text.startswith("```"):
             text = text.split("\n", 1)[1].rsplit("```", 1)[0]
@@ -44,7 +43,7 @@ class SentimentAgent(BaseAgent):
     name = "sentiment"
 
     def __init__(self, api_key: str):
-        self._client = anthropic.AsyncAnthropic(api_key=api_key)
+        self._client = genai.Client(api_key=api_key)
         self._cache: dict[str, dict] = {}
 
     def _compute_news_hash(self, news_items: list[str]) -> str:
@@ -53,7 +52,6 @@ class SentimentAgent(BaseAgent):
 
     async def _fetch_news(self, symbol: str) -> list[str]:
         """Fetch news from Alpaca. Override in subclass or mock for testing."""
-        # Will be connected to Alpaca news API in integration
         return []
 
     async def analyze(self, symbol: str) -> AgentResult:
@@ -74,12 +72,11 @@ class SentimentAgent(BaseAgent):
 
         prompt = _build_prompt(symbol, news_items)
         try:
-            response = await self._client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=200,
-                messages=[{"role": "user", "content": prompt}],
+            response = await self._client.aio.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
             )
-            parsed = _parse_response(response.content[0].text)
+            parsed = _parse_response(response.text)
         except Exception as e:
             return AgentResult(score=0, reasoning=f"LLM error: {e}")
 

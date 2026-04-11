@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-import anthropic
+from google import genai
 
 
 @dataclass
@@ -87,7 +87,7 @@ class DecisionAgent:
     name = "decision"
 
     def __init__(self, api_key: str):
-        self._client = anthropic.AsyncAnthropic(api_key=api_key)
+        self._client = genai.Client(api_key=api_key)
 
     async def decide(
         self,
@@ -107,12 +107,11 @@ class DecisionAgent:
             risk_budget_pct=risk_budget_pct,
         )
         try:
-            response = await self._client.messages.create(
-                model="claude-sonnet-4-6-20250514",
-                max_tokens=400,
-                messages=[{"role": "user", "content": prompt}],
+            response = await self._client.aio.models.generate_content(
+                model="gemini-2.5-pro",
+                contents=prompt,
             )
-            return _parse_decision(response.content[0].text)
+            return _parse_decision(response.text)
         except Exception as e:
             return DecisionOutput(
                 action="HOLD", symbol=symbol, position_size_pct=0,

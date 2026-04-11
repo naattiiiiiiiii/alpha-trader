@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     alpaca_secret_key: str = ""
     alpaca_paper: bool = True
 
-    # Claude API
-    anthropic_api_key: str = ""
+    # Google Gemini API
+    google_api_key: str = ""
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_trader"

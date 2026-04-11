@@ -29,5 +29,5 @@ jobs:
         env:
           ALPACA_API_KEY: fake
           ALPACA_SECRET_KEY: fake
-          ANTHROPIC_API_KEY: fake
+          GOOGLE_API_KEY: fake
           DATABASE_URL: sqlite+aiosqlite:///test.db
