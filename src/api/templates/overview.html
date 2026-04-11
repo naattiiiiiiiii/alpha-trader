@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="status-bar">
+    <span class="status {{ 'active' if status == 'ACTIVE' else 'paused' }}">{{ status }}</span>
+</div>
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Equity</div>
+        <div class="metric-value">${{ "{:,.2f}".format(equity) }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Daily P&L</div>
+        <div class="metric-value {{ 'positive' if daily_pnl >= 0 else 'negative' }}">${{ "{:+,.2f}".format(daily_pnl) }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Total P&L</div>
+        <div class="metric-value {{ 'positive' if total_pnl >= 0 else 'negative' }}">${{ "{:+,.2f}".format(total_pnl) }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Drawdown</div>
+        <div class="metric-value">{{ "{:.1f}".format(drawdown_pct) }}%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Positions</div>
+        <div class="metric-value">{{ positions_count }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Portfolio Heat</div>
+        <div class="metric-value">{{ "{:.1f}".format(portfolio_heat * 100) }}%</div>
+    </div>
+</div>
+{% endblock %}
