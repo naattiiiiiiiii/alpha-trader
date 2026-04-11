@@ -1,4 +1,4 @@
-from src.agents.fundamental import FundamentalAgent, _compute_fundamental_score
+from src.agents.fundamental import _compute_fundamental_score
 
 
 def test_compute_score_strong_company():

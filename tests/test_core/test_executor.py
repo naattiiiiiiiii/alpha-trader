@@ -1,5 +1,5 @@
 import pytest
-from src.core.executor import Executor, OrderRequest
+from src.core.executor import OrderRequest
 
 
 def test_order_request_bracket_prices():

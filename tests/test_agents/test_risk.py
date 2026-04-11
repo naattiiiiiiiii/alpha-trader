@@ -1,5 +1,5 @@
 import pytest
-from src.agents.risk import RiskAgent, PreTradeCheck, RiskLevel
+from src.agents.risk import RiskAgent, RiskLevel
 
 
 @pytest.fixture

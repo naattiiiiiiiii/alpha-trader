@@ -1,12 +1,10 @@
-import asyncio
 import logging
-from datetime import datetime
 
 from src.agents.technical import TechnicalAgent
 from src.agents.fundamental import FundamentalAgent
 from src.agents.sentiment import SentimentAgent
 from src.agents.decision import DecisionAgent, should_invoke_decisor
-from src.agents.risk import RiskAgent, RiskLevel
+from src.agents.risk import RiskAgent
 from src.core.portfolio import PortfolioManager
 from src.core.executor import Executor, OrderRequest
 from src.config import get_settings

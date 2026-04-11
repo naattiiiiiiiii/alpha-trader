@@ -1,5 +1,4 @@
-import pytest
-from src.agents.decision import _build_decision_prompt, _parse_decision, DecisionOutput
+from src.agents.decision import _build_decision_prompt, _parse_decision
 
 
 def test_build_prompt_includes_all_scores():

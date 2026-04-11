@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from src.core.maintenance import (
     get_cleanup_cutoff,
     should_alert_no_cycles,
     HealthStatus,
-    check_component_health,
 )
 
 

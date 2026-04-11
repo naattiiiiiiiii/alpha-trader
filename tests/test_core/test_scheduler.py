@@ -1,4 +1,4 @@
-from src.core.scheduler import AnalysisCycle, _aggregate_should_trade
+from src.core.scheduler import _aggregate_should_trade
 
 
 def test_aggregate_should_trade_strong_signals():
