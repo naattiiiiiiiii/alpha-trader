@@ -60,7 +60,7 @@ class SentimentAgent(BaseAgent):
         self._alpaca_secret_key = alpaca_secret_key
         self._news_client = None
         if alpaca_api_key and alpaca_secret_key:
-            from alpaca.data.news import NewsClient
+            from alpaca.data.historical.news import NewsClient
             self._news_client = NewsClient(
                 api_key=alpaca_api_key, secret_key=alpaca_secret_key,
             )
@@ -75,9 +75,10 @@ class SentimentAgent(BaseAgent):
             return []
         try:
             from alpaca.data.requests import NewsRequest
-            request = NewsRequest(symbols=[symbol], limit=10)
+            request = NewsRequest(symbols=symbol, limit=10)
             response = self._news_client.get_news(request)
-            headlines = [item.headline for item in response.news if item.headline]
+            news_list = response.data.get("news", [])
+            headlines = [item.headline for item in news_list if item.headline]
             logger.info(f"{symbol}: fetched {len(headlines)} news headlines from Alpaca")
             return headlines
         except Exception as e:
