@@ -36,8 +36,16 @@ async def main():
     # Initialize components
     technical = TechnicalAgent()
     fundamental = FundamentalAgent()
-    sentiment = SentimentAgent(api_key=settings.google_api_key)
-    decision = DecisionAgent(api_key=settings.google_api_key)
+    sentiment = SentimentAgent(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model_fast,
+    )
+    decision = DecisionAgent(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model_smart,
+    )
     risk = RiskAgent(
         max_risk_per_trade=settings.max_risk_per_trade,
         max_daily_loss=settings.max_daily_loss,

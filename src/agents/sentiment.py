@@ -1,6 +1,6 @@
 import json
 import hashlib
-from google import genai
+from openai import AsyncOpenAI
 
 from src.agents.base import BaseAgent, AgentResult
 
@@ -42,8 +42,9 @@ def _parse_response(text: str) -> dict:
 class SentimentAgent(BaseAgent):
     name = "sentiment"
 
-    def __init__(self, api_key: str):
-        self._client = genai.Client(api_key=api_key)
+    def __init__(self, base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", model: str = "llama3.2"):
+        self._client = AsyncOpenAI(base_url=base_url, api_key=api_key)
+        self._model = model
         self._cache: dict[str, dict] = {}
 
     def _compute_news_hash(self, news_items: list[str]) -> str:
@@ -72,11 +73,13 @@ class SentimentAgent(BaseAgent):
 
         prompt = _build_prompt(symbol, news_items)
         try:
-            response = await self._client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=200,
+                temperature=0.1,
             )
-            parsed = _parse_response(response.text)
+            parsed = _parse_response(response.choices[0].message.content)
         except Exception as e:
             return AgentResult(score=0, reasoning=f"LLM error: {e}")
 

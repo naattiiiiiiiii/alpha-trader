@@ -7,8 +7,11 @@ class Settings(BaseSettings):
     alpaca_secret_key: str = ""
     alpaca_paper: bool = True
 
-    # Google Gemini API
-    google_api_key: str = ""
+    # LLM (Ollama local by default, or any OpenAI-compatible API)
+    llm_base_url: str = "http://localhost:11434/v1"
+    llm_api_key: str = "ollama"  # Ollama doesn't need a real key
+    llm_model_fast: str = "llama3.2"  # For sentiment (fast, cheap)
+    llm_model_smart: str = "llama3"  # For decisions (more capable)
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_trader"

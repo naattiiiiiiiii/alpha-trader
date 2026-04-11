@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from google import genai
+from openai import AsyncOpenAI
 
 
 @dataclass
@@ -86,8 +86,9 @@ def _parse_decision(text: str) -> DecisionOutput:
 class DecisionAgent:
     name = "decision"
 
-    def __init__(self, api_key: str):
-        self._client = genai.Client(api_key=api_key)
+    def __init__(self, base_url: str = "http://localhost:11434/v1", api_key: str = "ollama", model: str = "llama3"):
+        self._client = AsyncOpenAI(base_url=base_url, api_key=api_key)
+        self._model = model
 
     async def decide(
         self,
@@ -107,11 +108,13 @@ class DecisionAgent:
             risk_budget_pct=risk_budget_pct,
         )
         try:
-            response = await self._client.aio.models.generate_content(
-                model="gemini-2.5-pro",
-                contents=prompt,
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=400,
+                temperature=0.1,
             )
-            return _parse_decision(response.text)
+            return _parse_decision(response.choices[0].message.content)
         except Exception as e:
             return DecisionOutput(
                 action="HOLD", symbol=symbol, position_size_pct=0,
