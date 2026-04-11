@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Signals</h1>
+{% if signals %}
+<table>
+    <thead>
+        <tr><th>Time</th><th>Symbol</th><th>Technical</th><th>Fundamental</th><th>Sentiment</th><th>Decision</th><th>Confidence</th></tr>
+    </thead>
+    <tbody>
+        {% for s in signals %}
+        <tr>
+            <td>{{ s.timestamp.strftime('%H:%M') }}</td>
+            <td>{{ s.symbol }}</td>
+            <td class="{{ 'positive' if s.technical_score > 0 else 'negative' }}">{{ s.technical_score }}</td>
+            <td class="{{ 'positive' if s.fundamental_score > 0 else 'negative' }}">{{ s.fundamental_score }}</td>
+            <td class="{{ 'positive' if s.sentiment_score > 0 else 'negative' }}">{{ s.sentiment_score }}</td>
+            <td>{{ s.decision }}</td>
+            <td>{{ "{:.0f}".format(s.confidence * 100) }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No signals generated yet</p>
+{% endif %}
+{% endblock %}

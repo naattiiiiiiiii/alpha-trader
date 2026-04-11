@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Settings</h1>
+<div class="settings-section">
+    <h2>Agent Control</h2>
+    <button hx-post="/api/agent/pause" class="btn-warning">Pause Agent</button>
+    <button hx-post="/api/agent/resume" class="btn-success">Resume Agent</button>
+</div>
+<div class="settings-section">
+    <h2>Risk Parameters</h2>
+    <form hx-post="/api/settings/risk" hx-swap="none">
+        <label>Max risk per trade (%)<input type="number" name="max_risk_per_trade" value="{{ settings.max_risk_per_trade }}" step="0.1" min="0.1" max="5"></label>
+        <label>Max daily loss (%)<input type="number" name="max_daily_loss" value="{{ settings.max_daily_loss }}" step="0.1" min="0.5" max="10"></label>
+        <label>Max portfolio heat (%)<input type="number" name="max_portfolio_heat" value="{{ settings.max_portfolio_heat }}" step="0.5" min="1" max="20"></label>
+        <label>Max drawdown (%)<input type="number" name="max_drawdown" value="{{ settings.max_drawdown }}" step="0.5" min="2" max="20"></label>
+        <label>Max sector exposure (%)<input type="number" name="max_sector_exposure" value="{{ settings.max_sector_exposure }}" step="1" min="5" max="50"></label>
+        <label>Analysis interval (min)<input type="number" name="analysis_interval" value="{{ settings.analysis_interval }}" step="1" min="1" max="60"></label>
+        <button type="submit">Save</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Trade History</h1>
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Total Trades</div>
+        <div class="metric-value">{{ stats.total_trades }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Win Rate</div>
+        <div class="metric-value">{{ "{:.0f}".format(stats.win_rate) }}%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Avg Win</div>
+        <div class="metric-value positive">${{ "{:.2f}".format(stats.avg_win) }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Avg Loss</div>
+        <div class="metric-value negative">${{ "{:.2f}".format(stats.avg_loss) }}</div>
+    </div>
+</div>
+{% if trades %}
+<table>
+    <thead>
+        <tr><th>Date</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&L</th><th>P&L %</th></tr>
+    </thead>
+    <tbody>
+        {% for t in trades %}
+        <tr>
+            <td>{{ t.exit_time.strftime('%Y-%m-%d %H:%M') if t.exit_time else '-' }}</td>
+            <td>{{ t.symbol }}</td>
+            <td>{{ t.side }}</td>
+            <td>{{ t.qty }}</td>
+            <td>${{ "{:.2f}".format(t.entry_price) }}</td>
+            <td>${{ "{:.2f}".format(t.exit_price) if t.exit_price else '-' }}</td>
+            <td class="{{ 'positive' if (t.pnl or 0) >= 0 else 'negative' }}">${{ "{:+.2f}".format(t.pnl or 0) }}</td>
+            <td class="{{ 'positive' if (t.pnl_pct or 0) >= 0 else 'negative' }}">{{ "{:+.1f}".format((t.pnl_pct or 0) * 100) }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No completed trades yet</p>
+{% endif %}
+{% endblock %}

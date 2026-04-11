@@ -5,6 +5,10 @@ from pathlib import Path
 
 from src.api.routes.dashboard import router as dashboard_router
 from src.api.routes.positions import router as positions_router
+from src.api.routes.history import router as history_router
+from src.api.routes.signals import router as signals_router
+from src.api.routes.settings import router as settings_router
+from src.api.routes.logs import router as logs_router
 
 
 def create_app() -> FastAPI:
@@ -26,5 +30,9 @@ def create_app() -> FastAPI:
     # Routes
     app.include_router(dashboard_router)
     app.include_router(positions_router)
+    app.include_router(history_router)
+    app.include_router(signals_router)
+    app.include_router(settings_router)
+    app.include_router(logs_router)
 
     return app

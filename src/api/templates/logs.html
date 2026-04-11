@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Logs</h1>
+<div class="log-filters">
+    <button hx-get="/api/logs?level=all" hx-target="#log-container">All</button>
+    <button hx-get="/api/logs?level=TRADE" hx-target="#log-container">Trades</button>
+    <button hx-get="/api/logs?level=WARNING" hx-target="#log-container">Warnings</button>
+    <button hx-get="/api/logs?level=RISK_BLOCK" hx-target="#log-container">Risk Blocks</button>
+</div>
+<div id="log-container" class="log-container"
+     hx-ext="sse" sse-connect="/api/logs/stream" sse-swap="message">
+    {% for log in logs %}
+    <div class="log-entry log-{{ log.level | lower }}">
+        <span class="log-time">{{ log.timestamp }}</span>
+        <span class="log-level">{{ log.level }}</span>
+        <span class="log-msg">{{ log.message }}</span>
+    </div>
+    {% endfor %}
+    {% if not logs %}
+    <p class="empty-state">No logs yet</p>
+    {% endif %}
+</div>
+{% endblock %}
