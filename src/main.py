@@ -110,7 +110,9 @@ async def main():
     from src.api.app import create_app
 
     app = create_app(portfolio=portfolio, executor=executor)
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
     server = uvicorn.Server(config)
 
     # Run server as a task
@@ -170,7 +172,14 @@ async def run_analysis_cycle(cycle, watchlist, executor, portfolio):
                 start=datetime.now() - timedelta(days=30),
             )
             bars = data_client.get_stock_bars(request)
-            df = bars[symbol].df if symbol in bars else None
+            try:
+                df = bars.df
+                if symbol in df.index.get_level_values("symbol"):
+                    df = df.xs(symbol, level="symbol")
+                else:
+                    df = None
+            except Exception:
+                df = None
 
             if df is None or len(df) < 50:
                 logger.warning(f"{symbol}: insufficient data ({len(df) if df is not None else 0} bars)")

@@ -2,7 +2,9 @@
 
 Agente autonomo de trading de acciones USA con gestion de riesgo profesional de 5 niveles, analisis multi-agente y dashboard en tiempo real.
 
-**Coste total: $0/mes** — usa LLMs locales (Ollama) y paper trading de Alpaca.
+**Coste total: $0/mes** — usa LLMs gratuitos en la nube (Cerebras) y paper trading de Alpaca.
+
+**Live demo**: [alpha-trader-production-9277.up.railway.app](https://alpha-trader-production-9277.up.railway.app)
 
 ## Que hace
 
@@ -14,12 +16,12 @@ Noticias reales          Indicadores tecnicos       Datos fundamentales
         |                        |                          |
         v                        v                          v
   Agente Sentimiento      Agente Tecnico           Agente Fundamental
-  (LLM: llama3.2)        (Python puro)             (Python puro)
+  (LLM: llama3.1-8b)     (Python puro)             (Python puro)
         |                        |                          |
         +------------------------+---------------------------+
                                  |
                                  v
-                        Agente Decisor (LLM: llama3)
+                        Agente Decisor (LLM: llama3.1-8b)
                         "BUY AAPL, confidence 0.82"
                                  |
                                  v
@@ -30,6 +32,17 @@ Noticias reales          Indicadores tecnicos       Datos fundamentales
                         Alpaca API -> Bracket Order
                         (entry + stop-loss + take-profit)
 ```
+
+## Funcionamiento en produccion
+
+El agente esta desplegado en Railway y funciona 24/7 de forma autonoma:
+
+- **Ciclo cada 15 minutos**: analiza 20 acciones del S&P 500 (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA, etc.)
+- **Analisis tecnico**: 13 indicadores (RSI, MACD, EMA, Bollinger, ATR, volumen, etc.)
+- **Analisis fundamental**: 10 metricas (P/E, ROE, FCF yield, deuda, margen, etc.)
+- **Analisis de sentimiento**: noticias en tiempo real de Alpaca procesadas por LLM
+- **Decisiones**: LLM evalua los 3 scores y decide BUY/SELL/HOLD con nivel de confianza
+- **Ejecucion**: ordenes bracket automaticas con stop-loss y take-profit
 
 ## Gestion de riesgo (5 niveles)
 
@@ -46,69 +59,64 @@ Noticias reales          Indicadores tecnicos       Datos fundamentales
 | Componente | Tecnologia | Coste |
 |---|---|---|
 | Trading | Alpaca Paper Trading | $0 |
-| LLM Sentimiento | Ollama + llama3.2 (local) | $0 |
-| LLM Decisor | Ollama + llama3 (local) | $0 |
+| LLM | Cerebras (llama3.1-8b, cloud) | $0 |
 | Analisis tecnico | pandas-ta (13 indicadores) | $0 |
 | Analisis fundamental | yfinance (10 metricas) | $0 |
 | Noticias | Alpaca News API (tiempo real) | $0 |
-| Base de datos | PostgreSQL | $0 |
 | Dashboard | FastAPI + HTMX | $0 |
+| Hosting | Railway (24/7) | $0-5/mes |
 | Notificaciones | Telegram Bot | $0 |
 
-Compatible con cualquier API OpenAI-compatible: Ollama, ChatGPT, Grok, Gemini, vLLM, etc. Solo cambia `LLM_BASE_URL` en `.env`.
+Compatible con cualquier API OpenAI-compatible: Cerebras, Groq, Ollama, ChatGPT, Gemini, etc. Solo cambia `LLM_BASE_URL` en `.env`.
 
 ## Quick Start
 
-### Requisitos previos
-
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) (gestor de paquetes)
-- [Ollama](https://ollama.com) (LLM local)
-- [Docker](https://docker.com) (para PostgreSQL)
-- Cuenta gratuita en [Alpaca Markets](https://alpaca.markets) (Trading API, paper trading)
-
-### Instalacion
+### Opcion 1: Local
 
 ```bash
 # 1. Clonar
 git clone https://github.com/naattiiiiiiiii/alpha-trader.git
 cd alpha-trader
 
-# 2. Instalar modelos de Ollama
-ollama pull llama3
-ollama pull llama3.2
-
-# 3. Configurar
+# 2. Configurar
 cp .env.example .env
-# Editar .env con tus API keys de Alpaca
+# Editar .env con tus API keys de Alpaca y LLM
 
-# 4. Levantar base de datos
+# 3. Base de datos
 docker compose up db -d
 
-# 5. Instalar dependencias
+# 4. Instalar y ejecutar
 uv sync
-
-# 6. Crear tablas
-uv run python -c "
-import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine
-from src.models.database import Base
-from src.models import Trade, Signal, RiskEvent, PortfolioSnapshot, AgentConfig
-async def init():
-    engine = create_async_engine('postgresql+asyncpg://postgres:postgres@localhost:5433/alpha_trader')
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await engine.dispose()
-asyncio.run(init())
-"
-
-# 7. Ejecutar
 uv run python -m src.main
+```
+
+### Opcion 2: Deploy en Railway (24/7)
+
+```bash
+# 1. Instalar Railway CLI
+brew install railway
+
+# 2. Login y crear proyecto
+railway login
+railway init --name alpha-trader
+
+# 3. Configurar variables de entorno
+railway variables set \
+  ALPACA_API_KEY=tu_key \
+  ALPACA_SECRET_KEY=tu_secret \
+  ALPACA_PAPER=true \
+  LLM_BASE_URL=https://api.cerebras.ai/v1 \
+  LLM_API_KEY=tu_cerebras_key \
+  LLM_MODEL_FAST=llama3.1-8b \
+  LLM_MODEL_SMART=llama3.1-8b
+
+# 4. Deploy
+railway up
 ```
 
 ### Dashboard
 
-Abre `http://localhost:8000` para ver:
+Abre `http://localhost:8000` (local) o la URL de Railway para ver:
 - Estado del agente y P&L en tiempo real
 - Posiciones abiertas con boton de cierre manual
 - Historial de trades con estadisticas (win rate, profit factor)
@@ -124,11 +132,11 @@ ALPACA_API_KEY=tu_key
 ALPACA_SECRET_KEY=tu_secret
 ALPACA_PAPER=true
 
-# LLM (Ollama por defecto, o cualquier API OpenAI-compatible)
-LLM_BASE_URL=http://localhost:11434/v1
-LLM_API_KEY=ollama
-LLM_MODEL_FAST=llama3.2    # Sentimiento (rapido)
-LLM_MODEL_SMART=llama3     # Decisiones (mas capaz)
+# LLM (cualquier API OpenAI-compatible)
+LLM_BASE_URL=https://api.cerebras.ai/v1
+LLM_API_KEY=tu_key
+LLM_MODEL_FAST=llama3.1-8b    # Sentimiento (rapido)
+LLM_MODEL_SMART=llama3.1-8b   # Decisiones (mas capaz)
 
 # Risk (ajustables desde el dashboard)
 MAX_RISK_PER_TRADE=0.02    # 2% max por operacion
@@ -160,19 +168,8 @@ alpha-trader/
 ├── tests/                # 66 tests
 ├── Dockerfile            # Deploy con Docker
 ├── docker-compose.yml    # App + PostgreSQL
-└── railway.toml          # Deploy en Railway (cloud)
+└── railway.toml          # Deploy en Railway (cloud, 24/7)
 ```
-
-## Deploy en cloud (Railway)
-
-Para ejecutar 24/7 sin tener el ordenador encendido:
-
-1. Conecta el repo en [Railway](https://railway.app)
-2. Agrega un addon de PostgreSQL
-3. Configura las variables de entorno
-4. Railway despliega automaticamente en cada push a main
-
-Coste estimado: $5-10/mes (hosting) + coste del LLM en cloud si no usas Ollama.
 
 ## Licencia
 
